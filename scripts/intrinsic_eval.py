@@ -6,7 +6,7 @@ object.
   renders:  python -m scripts.intrinsic_eval                 -> runs/gloss_edit/intrinsic.txt, intrinsic.png
             (sets A and B of specular_separation.py, same error: RMSE x100 against the true diffuse image)
   photos:   python -m scripts.intrinsic_eval photo1.jpg ...  -> runs/photo/intrinsic_<name>.jpg (input | suppressed |
-            positive residual)
+            positive residual), _suppressed.png, and _enhanced.png (input + positive residual once more)
 """
 import glob
 import sys
@@ -28,6 +28,7 @@ from scripts.specular_separation import auc, rmse
 from scripts.specular_separation import load as load_render
 
 LUMV = LUM.view(3)
+ENHANCE = 1.0  # existing gloss is enhanced by adding this many times the positive residual
 
 
 def run(models, lin):
@@ -102,6 +103,7 @@ def photos(models, paths, size=1024):
         y = (lin * LUM[0]).sum(0)
         print(f"{Path(path).name}: positive residual is {float((pos * LUM[0]).sum(0).sum() / y.sum()):.3f} of the image's light")
         to8 = lambda t: (linear_to_srgb(t).permute(1, 2, 0).numpy() * 255).round().astype(np.uint8)
+        Image.fromarray(to8(lin + ENHANCE * pos)).save(Path("runs/photo") / f"intrinsic_{Path(path).stem}_enhanced.png")
         sheet = np.concatenate([to8(lin), to8(dif), to8(pos * 2)], 1)
         out = Path("runs/photo") / f"intrinsic_{Path(path).stem}.jpg"
         Image.fromarray(sheet).save(out, quality=90)

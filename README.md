@@ -22,6 +22,15 @@ Image-computable models of perceived gloss, tested against the human ratings of 
 
 Left: a public-domain photograph of grapes covered with bloom. Right: gloss added by `scripts/photo_gloss.py`.
 
+![Gloss added to painted peaches](assets/peaches_gloss.jpg)
+
+Gloss added to the peaches of a still-life painting of 1816 (signed Raphaelle Peale; public domain), at two
+roughness settings.
+
+Adding gloss works on round objects with clear shading and a medium or dark body colour, such as fruit. It does
+little on flat or thin surfaces and on near-white objects, the object region is picked by colour and can leak, and the
+strength rests on a guessed albedo. Details in [docs/GLOSS_SYNTHESIS.md](docs/GLOSS_SYNTHESIS.md).
+
 ![Gloss suppressed on a bronze statue](assets/suppress_buddha.jpg)
 
 ![Gloss suppressed on a plate](assets/suppress_plate.jpg)

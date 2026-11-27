@@ -15,7 +15,7 @@ import matplotlib
 import numpy as np
 import torch
 import torch.nn.functional as F
-from PIL import Image
+from PIL import Image, ImageOps
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -24,13 +24,14 @@ from scripts.gloss_edit import LUM, blur, linear_to_srgb, srgb_to_linear
 from scripts.highlight_synthesis import light_direction, physical_layer
 
 
-def hue_mask(x, lo, hi, min_sat=0.15):
-    """x: (3,H,W) sRGB. Pixels whose hue lies in [lo, hi] (0-1) and that are not grey; small gaps closed."""
+def hue_mask(x, lo, hi, min_sat=0.15, min_value=0.0):
+    """x: (3,H,W) sRGB. Pixels whose hue lies in [lo, hi] (0-1), that are not grey (saturation above min_sat) and not
+    dark (largest channel above min_value); small gaps closed."""
     mx, mn = x.amax(0), x.amin(0)
     d = (mx - mn).clamp_min(1e-6)
     r, g, b = x
     h = torch.where(mx == r, ((g - b) / d) % 6, torch.where(mx == g, (b - r) / d + 2, (r - g) / d + 4)) / 6
-    m = ((h >= lo) & (h <= hi) & ((mx - mn) / mx.clamp_min(1e-6) > min_sat)).float()[None, None]
+    m = ((h >= lo) & (h <= hi) & ((mx - mn) / mx.clamp_min(1e-6) > min_sat) & (mx > min_value)).float()[None, None]
     m = blur(m, 3.0) > 0.5
     return m[0, 0]
 
@@ -42,6 +43,12 @@ def main():
     p.add_argument("--width", type=int, default=896, help="working width after cropping")
     p.add_argument("--mask", help="mask image of the object (white = object), same framing as the crop")
     p.add_argument("--hue", type=float, nargs=2, help="hue range (0-1) of the object, used when no mask is given")
+    p.add_argument("--min-sat", type=float, default=0.15, help="with --hue: least saturation of the object")
+    p.add_argument("--min-value", type=float, default=0.0, help="with --hue: least brightness (largest sRGB channel)")
+    p.add_argument("--seed", type=float, nargs=2, help="a point on the object (fractions of width and height): the "
+                   "object is the region of similar chromaticity around it")
+    p.add_argument("--box", type=float, nargs=4, default=[0, 0, 1, 1], help="x0 y0 x1 y1 as fractions; limits the seed region")
+    p.add_argument("--tol", type=float, default=0.06, help="chromaticity distance that still counts as the object")
     p.add_argument("--albedo", type=float, default=0.1, help="luminance albedo of the object; sets the layer's strength")
     p.add_argument("--roughness", type=float, nargs="+", default=[0.3, 0.15])
     p.add_argument("--sheen", choices=["chromatic", "white"], default="chromatic",
@@ -56,7 +63,7 @@ def main():
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
 
-    img = Image.open(args.image).convert("RGB")
+    img = ImageOps.exif_transpose(Image.open(args.image)).convert("RGB")
     if args.crop:
         img = img.crop(args.crop)
     h = round(args.width * img.height / img.width / 14) * 14
@@ -64,8 +71,12 @@ def main():
     x = torch.from_numpy(np.asarray(img.resize((w, h), Image.LANCZOS))).float().permute(2, 0, 1) / 255
     if args.mask:
         m = torch.from_numpy(np.asarray(Image.open(args.mask).convert("L").resize((w, h)))) > 127
+    elif args.seed:
+        from scripts.photo_suppress import object_mask
+        m = object_mask(x, (int(args.seed[0] * w), int(args.seed[1] * h)),
+                        [int(args.box[0] * w), int(args.box[1] * h), int(args.box[2] * w), int(args.box[3] * h)], args.tol)
     else:
-        m = hue_mask(x, *args.hue)
+        m = hue_mask(x, *args.hue, args.min_sat, args.min_value)
 
     sys.path.insert(0, "external/MoGe")
     from moge.model.v2 import MoGeModel

@@ -65,6 +65,37 @@ Two values do not follow from the image: the albedo ρ, which sets the strength,
   luminance stays the same. A coloured sheen is not what a dielectric does physically; it is what keeps the object's
   identity.
 
+## Where it works, and where it does not
+
+![Gloss added to painted peaches](../assets/peaches_gloss.jpg)
+
+Peaches in a still-life painting of 1816 (signed Raphaelle Peale; public domain). MoGe-2 gives a rounded surface for
+each peach even on a painting, and the highlights land on the upper left of every peach, where the painted light
+comes from.
+
+| Object | Shading fit R² | Result |
+|---|---|---|
+| Grapes (photograph) | 0.44 | sheen and highlights on every grape |
+| Peaches (painting) | 0.17 | highlights on the lit side of every peach |
+| Camellia petals | 0.21 | thin highlights along the petal edges only |
+| Rubber watch strap | 0.12 | almost no change; the object region leaked onto the table |
+| Cream robot-arm casing | 0.67 | barely visible |
+
+The method suits round objects with clear shading and a medium or dark body colour. Fruit is the favourable case.
+
+- **Flat or thin surfaces** (a strap, petals) have little variation of the normal, so the shading neither fixes the
+  light direction nor leaves room for a layer that varies over the surface.
+- **Bright, near-white objects** have no headroom: an added layer cannot stand out from the body.
+- **The object region** comes from a hue range or a seed point. It leaks onto neighbours of similar colour, and it drops
+  the shaded side of an object when a brightness limit is needed to exclude the background (the peaches).
+- **Colour variation** (the blush of a peach, the bloom of grapes) is taken for shading by the fit. The light direction
+  survived this in both fruit images; the R² values show how poor the fit itself is.
+- **The strength** rests on a guessed albedo (0.1 grapes, 0.4 peaches).
+
+Gloss that an object already has can be enhanced differently: adding the positive residual of an intrinsic
+decomposition once more ([GLOSS_SUPPRESSION.md](GLOSS_SUPPRESSION.md), `intrinsic_eval.py`) works on a whole
+photograph without a mask and without artefacts; at that gain the change is small.
+
 ## Limits
 
 - No perceptual ratings yet. The statements about appearance rest on one observer.
