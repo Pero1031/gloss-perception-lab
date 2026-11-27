@@ -74,3 +74,5 @@ Two values do not follow from the image: the albedo ρ, which sets the strength,
 - One light and low-order lighting: no structure inside the reflection, which smooth large surfaces need.
 - Positions of narrow highlights do not survive estimated normals ([NORMALS.md](NORMALS.md)).
 - Video has not been tried; per-frame normals would make highlights flicker.
+- Suppressing the added gloss again does not return the original photograph
+  ([GLOSS_SUPPRESSION.md](GLOSS_SUPPRESSION.md)).

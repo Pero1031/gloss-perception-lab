@@ -15,11 +15,18 @@ Image-computable models of perceived gloss, tested against the human ratings of 
 | Highlight maps from stereo or render supervision | A monocular U-Net trained to predict the left-right residual or the rendered specular share is calibrated on renders but transfers worse to Serrano images than simple cues (r 0.51 / 0.42). | [docs/STEREO_HIGHLIGHT.md](docs/STEREO_HIGHLIGHT.md) |
 | Editing existing gloss | The gloss map finds compact highlights (AUC 0.87-0.95) but not the specular component as a whole (0.53-0.63), which is a reflection spread over the surface. Scaling a per-pixel specular share is the right edit; a highlight region with a layer is not. Networks trained on narrow synthetic data and a published highlight remover both fall short. | [docs/GLOSS_EDIT.md](docs/GLOSS_EDIT.md) |
 | Adding gloss to a matte object | A specular layer from the normals and the lighting implied by the shading. Highlights alone look like paint; a sheen over the whole lit side makes them read as gloss. The amount of specular light predicted from the shading fit matches real renders. On photographs the sheen must keep the object's chromaticity. | [docs/GLOSS_SYNTHESIS.md](docs/GLOSS_SYNTHESIS.md) |
+| Suppressing gloss | Fitting diffuse shading to the normals and removing what exceeds it is the most accurate method on clean single objects (error 4.4-5.2 against 8.3-10.4 without an edit), tells matte from glossy there, and leaves matte objects alone. On photographs it breaks; the intrinsic decomposition of Careaga & Aksoy removes highlights across a whole photo without a mask. Adding gloss and removing it again does not return the original. | [docs/GLOSS_SUPPRESSION.md](docs/GLOSS_SUPPRESSION.md) |
 | Normals from one image | MoGe-2 gives 13 deg mean error on matte renders, against 24-28 deg for Marigold and silhouette inflation. The sheen survives estimated normals (r 0.8), the position of narrow highlights does not. | [docs/NORMALS.md](docs/NORMALS.md) |
 
 ![Gloss added to matte grapes](assets/grapes_gloss.jpg)
 
 Left: a public-domain photograph of grapes covered with bloom. Right: gloss added by `scripts/photo_gloss.py`.
+
+![Gloss suppressed on a bronze statue](assets/suppress_buddha.jpg)
+
+![Gloss suppressed on a plate](assets/suppress_plate.jpg)
+
+Gloss suppressed with the intrinsic decomposition (`scripts/intrinsic_eval.py`): input, result, and the removed part.
 
 ## Setup
 
@@ -33,6 +40,8 @@ Rendering scripts need Blender 4.5; `scripts/stereo_matching.py` needs `opencv-p
 `normal_estimation` and `photo_gloss` also need `diffusers`, `transformers`, `huggingface_hub`,
 `opencv-python-headless` and the MoGe repository (https://github.com/microsoft/MoGe) cloned into `external/MoGe`
 with its `utils3d_moge` dependency; model weights are fetched from the Hugging Face hub on first use.
+`intrinsic_eval` needs the code of Careaga & Aksoy (academic use only) in `external/`, see `scripts/intrinsic_model.py`,
+and `torchvision`, `timm`, `kornia`, `scikit-image`, `imageio`, `antialiased_cnns`, `beautifulsoup4`.
 
 ## Data
 
@@ -74,6 +83,8 @@ scripts/      cue extraction, evaluations, rendering and figures
 | `gloss_edit`, `gloss_edit_eval`, `tshrnet_eval` | detectors and edits of existing gloss, scored against the true specular pass |
 | `highlight_synthesis`, `photo_gloss` | specular layer for matte objects, on renders and on photographs |
 | `normal_estimation` | normals from one image (silhouette inflation, MoGe-2, Marigold) |
+| `specular_separation`, `photo_suppress` | gloss suppression and the matte / glossy judgement by a shading fit, on renders and on photographs |
+| `intrinsic_model`, `intrinsic_eval` | gloss suppression with the intrinsic decomposition of Careaga & Aksoy |
 
 Scripts that import `bpy` run inside Blender (`blender -b --factory-startup -P <script> -- <args>`). The others run as
 `python -m scripts.<name>`.
@@ -92,6 +103,12 @@ Scripts that import `bpy` run inside Blender (`blender -b --factory-startup -P <
 - Morimoto, T., Akbarinia, A., Storrs, K. R., Cheeseman, J. R., Smithson, H. E., Gegenfurtner, K. R., Fleming, R. W.
   (2026). Human gloss perception reproduced by tiny neural networks. *Nature Human Behaviour*, 10(7), 1340-1355.
   doi:10.1038/s41562-026-02445-0
+- Careaga, C., Aksoy, Y. (2023). Intrinsic image decomposition via ordinal shading. *ACM Transactions on Graphics*,
+  43(1). doi:10.1145/3630750
+- Careaga, C., Aksoy, Y. (2024). Colorful diffuse intrinsic image decomposition in the wild. *ACM Transactions on
+  Graphics*, 43(6). doi:10.1145/3687984
+- Ramamoorthi, R., Hanrahan, P. (2001). An efficient representation for irradiance environment maps. *SIGGRAPH 2001*,
+  497-500. doi:10.1145/383259.383317
 - Fu, G., Zhang, Q., Zhu, L., Xiao, C., Li, P. (2023). Towards high-quality specular highlight removal by leveraging
   large-scale synthetic data. *ICCV 2023*, 12811-12819. doi:10.1109/ICCV51070.2023.01181
 - Wang, R., Xu, S., Dong, Y., Deng, Y., Xiang, J., Lv, Z., Sun, G., Tong, X., Yang, J. (2025). MoGe-2: accurate

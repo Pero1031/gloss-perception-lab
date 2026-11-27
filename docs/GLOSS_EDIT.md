@@ -64,3 +64,6 @@ Suppression (gain 0) of glossy objects:
 Estimate the amount of specular reflection first. A glossy input is edited by scaling its specular part. A matte input
 is left alone when suppressing, and enhancement has to synthesise the specular layer
 ([GLOSS_SYNTHESIS.md](GLOSS_SYNTHESIS.md)).
+
+Later work found a suppression method that needs no trained network for the specular part, and tested a published
+intrinsic decomposition on photographs: [GLOSS_SUPPRESSION.md](GLOSS_SUPPRESSION.md).
