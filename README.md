@@ -1,41 +1,52 @@
 # gloss-perception-lab
 
-Image-computable models of perceived gloss, tested against the human ratings of Serrano et al. (2021):
+![Gloss added to painted peaches](assets/peaches_gloss.jpg)
 
-- **Cue models**: highlight cues (coverage, contrast, sharpness) and reflection cues, fed to a small regressor.
-- **U-Nets** on RGB or on multi-scale centre-surround (LoG) responses.
-- **Highlight maps learnt from privileged information**: a monocular U-Net trained on rendered scenes to predict the
-  left-right stereo residual or the rendered specular share.
+Adding gloss to matte objects and removing it from glossy ones, in single images. Above: the peaches of a still-life
+painting of 1816 (signed Raphaelle Peale; public domain), as painted and with gloss added at two roughness settings.
 
-## Findings
+- **Adding gloss.** Surface normals are estimated from the image (MoGe-2), the lighting is read from the object's own
+  shading, and a specular layer is computed from the two: a sheen over the lit side plus highlights. Nothing of the
+  real surroundings is reflected. The object keeps its chromaticity and its mean luminance.
+- **Removing gloss.** On a clean single object, diffuse shading is fitted to the normals and what exceeds it is
+  removed. On real photographs an intrinsic image decomposition (Careaga & Aksoy) does the job.
 
-| Topic | Result | Page |
-|---|---|---|
-| Predicting gloss ratings | Cue models and U-Nets reach about 95% of the noise ceiling within one shape (r 0.92 / 0.90, ceiling 0.94) and drop to r 0.64 / 0.63 on a held-out shape. Matte materials on finely detailed shapes are rated glossy by every model; metals are under-predicted because of reflections, not highlights. | [docs/RATING_MODELS.md](docs/RATING_MODELS.md) |
-| Highlight maps from stereo or render supervision | A monocular U-Net trained to predict the left-right residual or the rendered specular share is calibrated on renders but transfers worse to Serrano images than simple cues (r 0.51 / 0.42). | [docs/STEREO_HIGHLIGHT.md](docs/STEREO_HIGHLIGHT.md) |
-| Editing existing gloss | The gloss map finds compact highlights (AUC 0.87-0.95) but not the specular component as a whole (0.53-0.63), which is a reflection spread over the surface. Scaling a per-pixel specular share is the right edit; a highlight region with a layer is not. Networks trained on narrow synthetic data and a published highlight remover both fall short. | [docs/GLOSS_EDIT.md](docs/GLOSS_EDIT.md) |
-| Adding gloss to a matte object | A specular layer from the normals and the lighting implied by the shading. Highlights alone look like paint; a sheen over the whole lit side makes them read as gloss. The amount of specular light predicted from the shading fit matches real renders. On photographs the sheen must keep the object's chromaticity. | [docs/GLOSS_SYNTHESIS.md](docs/GLOSS_SYNTHESIS.md) |
-| Suppressing gloss | Fitting diffuse shading to the normals and removing what exceeds it is the most accurate method on clean single objects (error 4.4-5.2 against 8.3-10.4 without an edit), tells matte from glossy there, and leaves matte objects alone. On photographs it breaks; the intrinsic decomposition of Careaga & Aksoy removes highlights across a whole photo without a mask. Adding gloss and removing it again does not return the original. | [docs/GLOSS_SUPPRESSION.md](docs/GLOSS_SUPPRESSION.md) |
-| Normals from one image | MoGe-2 gives 13 deg mean error on matte renders, against 24-28 deg for Marigold and silhouette inflation. The sheen survives estimated normals (r 0.8), the position of narrow highlights does not. | [docs/NORMALS.md](docs/NORMALS.md) |
+## Adding gloss
 
 ![Gloss added to matte grapes](assets/grapes_gloss.jpg)
 
 Left: a public-domain photograph of grapes covered with bloom. Right: gloss added by `scripts/photo_gloss.py`.
 
-![Gloss added to painted peaches](assets/peaches_gloss.jpg)
+It works on round objects with clear shading and a medium or dark body colour, such as fruit. It does little on flat
+or thin surfaces and on near-white objects, the object region is picked by colour and can leak, and the strength rests
+on a guessed albedo. Details in [docs/GLOSS_SYNTHESIS.md](docs/GLOSS_SYNTHESIS.md).
 
-Gloss added to the peaches of a still-life painting of 1816 (signed Raphaelle Peale; public domain), at two
-roughness settings.
-
-Adding gloss works on round objects with clear shading and a medium or dark body colour, such as fruit. It does
-little on flat or thin surfaces and on near-white objects, the object region is picked by colour and can leak, and the
-strength rests on a guessed albedo. Details in [docs/GLOSS_SYNTHESIS.md](docs/GLOSS_SYNTHESIS.md).
+## Removing gloss
 
 ![Gloss suppressed on a bronze statue](assets/suppress_buddha.jpg)
 
 ![Gloss suppressed on a plate](assets/suppress_plate.jpg)
 
 Gloss suppressed with the intrinsic decomposition (`scripts/intrinsic_eval.py`): input, result, and the removed part.
+Adding gloss and removing it again does not return the original, and telling a matte object from a glossy one is not
+yet reliable on photographs. Details in [docs/GLOSS_SUPPRESSION.md](docs/GLOSS_SUPPRESSION.md).
+
+## Findings
+
+| Topic | Result | Page |
+|---|---|---|
+| Adding gloss to a matte object | A specular layer from the normals and the lighting implied by the shading. Highlights alone look like paint; a sheen over the whole lit side makes them read as gloss. The amount of specular light predicted from the shading fit matches real renders. On photographs the sheen must keep the object's chromaticity. | [docs/GLOSS_SYNTHESIS.md](docs/GLOSS_SYNTHESIS.md) |
+| Suppressing gloss | Fitting diffuse shading to the normals and removing what exceeds it is the most accurate method on clean single objects (error 4.4-5.2 against 8.3-10.4 without an edit), tells matte from glossy there, and leaves matte objects alone. On photographs it breaks; the intrinsic decomposition of Careaga & Aksoy removes highlights across a whole photo without a mask. Adding gloss and removing it again does not return the original. | [docs/GLOSS_SUPPRESSION.md](docs/GLOSS_SUPPRESSION.md) |
+| Normals from one image | MoGe-2 gives 13 deg mean error on matte renders, against 24-28 deg for Marigold and silhouette inflation. The sheen survives estimated normals (r 0.8), the position of narrow highlights does not. | [docs/NORMALS.md](docs/NORMALS.md) |
+| Editing existing gloss | The gloss map finds compact highlights (AUC 0.87-0.95) but not the specular component as a whole (0.53-0.63), which is a reflection spread over the surface. Scaling a per-pixel specular share is the right edit; a highlight region with a layer is not. Networks trained on narrow synthetic data and a published highlight remover both fall short. | [docs/GLOSS_EDIT.md](docs/GLOSS_EDIT.md) |
+
+Earlier work in this repository tried to predict human gloss ratings (Serrano et al. 2021) from images. It did not
+get past one shape, and is kept as background:
+
+| Topic | Result | Page |
+|---|---|---|
+| Predicting gloss ratings | Cue models and U-Nets reach about 95% of the noise ceiling within one shape (r 0.92 / 0.90, ceiling 0.94) and drop to r 0.64 / 0.63 on a held-out shape. Matte materials on finely detailed shapes are rated glossy by every model; metals are under-predicted because of reflections, not highlights. | [docs/RATING_MODELS.md](docs/RATING_MODELS.md) |
+| Highlight maps from stereo or render supervision | A monocular U-Net trained to predict the left-right residual or the rendered specular share is calibrated on renders but transfers worse to Serrano images than simple cues (r 0.51 / 0.42). | [docs/STEREO_HIGHLIGHT.md](docs/STEREO_HIGHLIGHT.md) |
 
 ## Setup
 
