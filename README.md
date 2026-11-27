@@ -88,6 +88,10 @@ keeps its chromaticity), only the narrow highlight is added as white, and the di
 object's mean luminance stays the same. Adding the whole layer as white light brightens and desaturates the object.
 The albedo, which sets the strength, is still a guess.
 
+![Gloss added to matte grapes](assets/grapes_gloss.jpg)
+
+Left: a public-domain photograph of grapes covered with bloom. Right: output of `photo_gloss` (roughness 0.3).
+
 | Script | Purpose |
 |---|---|
 | `gloss_edit` | detectors (P and variants), specular layer and share edits, additive edit |
@@ -154,13 +158,18 @@ Scripts that import `bpy` run inside Blender (`blender -b --factory-startup -P <
 ## References
 
 - Serrano, A., Chen, B., Wang, C., Piovarči, M., Seidel, H.-P., Didyk, P., Myszkowski, K. (2021). The effect of shape and
-  illumination on material perception: model and applications. *ACM Transactions on Graphics*, 40(4).
+  illumination on material perception: model and applications. *ACM Transactions on Graphics*, 40(4), 1-16.
+  doi:10.1145/3450626.3459813
 - Marlow, P. J., Kim, J., Anderson, B. L. (2012). The perception and misperception of specular surface reflectance.
-  *Current Biology*, 22(20).
+  *Current Biology*, 22(20), 1909-1913. doi:10.1016/j.cub.2012.08.009
 - Prokott, K. E., Fleming, R. W. (2022). Identifying specular highlights: insights from deep learning. *Journal of
-  Vision*, 22(7).
-- Morimoto et al. (2025). bioRxiv 2025.05.09.653112.
-- Wang, R. et al. (2025). MoGe-2: accurate monocular geometry with metric scale and sharp details.
-- Ke, B. et al. (2025). Marigold: affordable adaptation of diffusion-based image generators for image analysis.
+  Vision*, 22(7):6. doi:10.1167/jov.22.7.6
+- Morimoto, T., Akbarinia, A., Storrs, K. R., Cheeseman, J. R., Smithson, H. E., Gegenfurtner, K. R., Fleming, R. W.
+  (2026). Human gloss perception reproduced by tiny neural networks. *Nature Human Behaviour*, 10(7), 1340-1355.
+  doi:10.1038/s41562-026-02445-0
 - Fu, G., Zhang, Q., Zhu, L., Xiao, C., Li, P. (2023). Towards high-quality specular highlight removal by leveraging
-  large-scale synthetic data. *ICCV*.
+  large-scale synthetic data. *ICCV 2023*, 12811-12819. doi:10.1109/ICCV51070.2023.01181
+- Wang, R., Xu, S., Dong, Y., Deng, Y., Xiang, J., Lv, Z., Sun, G., Tong, X., Yang, J. (2025). MoGe-2: accurate
+  monocular geometry with metric scale and sharp details. arXiv:2507.02546.
+- Ke, B., Qu, K., Wang, T., Metzger, N., Huang, S., Li, B., Obukhov, A., Schindler, K. (2025). Marigold: affordable
+  adaptation of diffusion-based image generators for image analysis. arXiv:2505.09358.

@@ -2,7 +2,7 @@ import torch.nn as nn
 
 
 class TinyGlossNet(nn.Module):
-    """Tiny gloss network in the style of Morimoto et al. (bioRxiv 2025).
+    """Tiny gloss network in the style of Morimoto et al. (2026).
 
     `kernels` linear 15x15 filters (no ReLU, no normalization), global max pooling, linear regression.
     Convolution is "valid" so the response map has no border artifacts; response() returns it for visualisation.
