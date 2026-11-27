@@ -1,4 +1,7 @@
-# Monocular highlight maps from stereo or render supervision (Nov 2026, paused)
+# Highlight maps from stereo or render supervision: calibrated on renders, no gain on Serrano
+
+Work of November 2026, paused. Later tests of these networks as detectors for editing are in
+[GLOSS_EDIT.md](GLOSS_EDIT.md).
 
 ## Summary
 
