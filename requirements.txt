@@ -1,0 +1,6 @@
+# torch is installed separately, see README.md (Quadro M4000 needs a CUDA 12.6 build)
+numpy
+pillow
+matplotlib
+openpyxl
+scikit-learn
