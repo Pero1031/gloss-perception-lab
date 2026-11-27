@@ -49,19 +49,31 @@ Suppression of glossy objects:
 - Scaling a per-pixel specular share is the right edit model (last row). The share network works on images like its
   training set and fails on finely detailed geometry, where it calls matte objects glossy. Its training set (noise
   blobs, eight environment maps) is too narrow.
-- TSHRNet removes compact highlights and leaves broad reflections. It is not meant for matte inputs.
+- TSHRNet removes compact highlights and leaves broad reflections.
 - Planned pipeline: estimate the amount of specular reflection first. Glossy input: scale the specular part. Matte
   input: leave it alone when suppressing; enhancement has to synthesise highlights.
-- Placing highlights on a matte object from its shading alone is poor (top-5% overlap with the true specular layer
-  0.18-0.35, chance 0.05). True surface normals with one fitted light do better (0.34-0.47) but remain far from the
-  truth, because the specular layer mirrors the whole environment.
+- TSHRNet is built for images that have highlights; matte inputs are outside its scope.
+
+Adding gloss to a matte object (`highlight_synthesis`, true surface normals for now). The layer reflects nothing of
+the real surroundings. It is computed from the normals and from the lighting implied by a Lambert fit to the shading,
+`Y ~ n.L + b`: the light direction (combined with a weak prior that light comes from above), a uniform part and a
+directional part.
+
+- Highlights alone do not look glossy. If only bright spots are added, the rest of the surface keeps its matte
+  luminance and the spots read as white paint. The layer needs a wide component over the whole lit side as well, as a
+  smooth surface under a strong light would show.
+- The wide component follows from the fit (a mirror shows the fitted lighting, weighted by Fresnel reflectance); the
+  narrow one is a GGX lobe of a compact source. With the true albedo, the specular share of the object's light matches
+  the real semi-glossy renders across shapes and lights (ours 0.23-0.53, real 0.21-0.47, same order).
+- Not from the image: the albedo, which sets the strength, and how much of the directional light is one compact source.
+- Open: normals estimated from the image, structure inside reflections on smooth surfaces, perceptual ratings.
 
 | Script | Purpose |
 |---|---|
 | `gloss_edit` | detectors (P and variants), specular layer and share edits, additive edit |
 | `gloss_edit_eval` | detection and edit errors against the true specular pass |
 | `tshrnet_eval` | the same test for TSHRNet (code and weights from its authors, placed in `external/`) |
-| `highlight_synthesis` | highlight placement on matte objects: shading only vs surface normals |
+| `highlight_synthesis` | specular layers for matte objects from normals and the shading fit, compared with real renders |
 
 ## Setup
 
