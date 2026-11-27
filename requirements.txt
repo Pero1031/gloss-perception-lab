@@ -4,3 +4,4 @@ pillow
 matplotlib
 openpyxl
 scikit-learn
+scipy

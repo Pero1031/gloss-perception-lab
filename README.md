@@ -26,6 +26,43 @@ Pearson r between model and median human glossiness rating.
 - Stereo- or render-supervised highlight maps are calibrated on renders but transfer worse to Serrano than simple cues
   (`notes/handoff_stereo_highlight.md`).
 
+## Gloss manipulation (in progress)
+
+Goal: suppress or enhance the gloss of an object in an image. Edits are scored without observers, on renders whose
+specular pass is known: an edit is compared with the same edit applied to the true specular component (RMSE x100 in
+sRGB, lower is better; 48 renders of Serrano geometries and 400 random scenes).
+
+Suppression of glossy objects:
+
+| Method | Serrano geometries | Random scenes |
+|---|---|---|
+| No edit | 8.6-10.7 | 11-12 |
+| Highlight layer over the region where the gloss map P is high | 9.7-14.3 | 15 |
+| Same, region from the stereo-residual network | 7.4-8.6 | 9-10 |
+| Per-pixel specular share from the specular-share network | 5.1-18.0 | 6 |
+| TSHRNet (Fu et al. 2023), mixed-data weights | 6.1-6.6 | 11 |
+| Per-pixel specular share, true values (upper bound) | 1.3-1.6 | 1.5 |
+
+- The gloss map P finds compact bright highlights (pixel AUC 0.87-0.95) but not the specular component as a whole
+  (AUC 0.53-0.63), which on glossy objects is a reflection of the environment spread over the surface. Editing a
+  highlight layer in the region flagged by P is worse than no edit and damages matte objects.
+- Scaling a per-pixel specular share is the right edit model (last row). The share network works on images like its
+  training set and fails on finely detailed geometry, where it calls matte objects glossy. Its training set (noise
+  blobs, eight environment maps) is too narrow.
+- TSHRNet removes compact highlights and leaves broad reflections. It is not meant for matte inputs.
+- Planned pipeline: estimate the amount of specular reflection first. Glossy input: scale the specular part. Matte
+  input: leave it alone when suppressing; enhancement has to synthesise highlights.
+- Placing highlights on a matte object from its shading alone is poor (top-5% overlap with the true specular layer
+  0.18-0.35, chance 0.05). True surface normals with one fitted light do better (0.34-0.47) but remain far from the
+  truth, because the specular layer mirrors the whole environment.
+
+| Script | Purpose |
+|---|---|
+| `gloss_edit` | detectors (P and variants), specular layer and share edits, additive edit |
+| `gloss_edit_eval` | detection and edit errors against the true specular pass |
+| `tshrnet_eval` | the same test for TSHRNet (code and weights from its authors, placed in `external/`) |
+| `highlight_synthesis` | highlight placement on matte objects: shading only vs surface normals |
+
 ## Setup
 
 ```powershell
@@ -86,3 +123,5 @@ Scripts that import `bpy` run inside Blender (`blender -b --factory-startup -P <
 - Prokott, K. E., Fleming, R. W. (2022). Identifying specular highlights: insights from deep learning. *Journal of
   Vision*, 22(7).
 - Morimoto et al. (2025). bioRxiv 2025.05.09.653112.
+- Fu, G., Zhang, Q., Zhu, L., Xiao, C., Li, P. (2023). Towards high-quality specular highlight removal by leveraging
+  large-scale synthetic data. *ICCV*.
