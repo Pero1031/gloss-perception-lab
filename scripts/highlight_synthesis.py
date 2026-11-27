@@ -170,7 +170,8 @@ def physical_layer(n, v, y, sel, roughness, albedo=0.1, compact=0.5):
     narrow = schlick((v * h).sum(-1)) * ggx / (4 * nv) * np.pi * compact * L / albedo * lit
     ys = blur(y[None, None], 1.5)[0, 0]
     occl = (ys / torch.quantile(ys[sel], 0.5).clamp_min(1e-6)).clamp(0, 1) ** 0.5
-    return (wide + narrow) * occl, 1 - schlick(nv), dict(directional_over_uniform=L / b, r2=r2)
+    return (wide + narrow) * occl, 1 - schlick(nv), dict(directional_over_uniform=L / b, r2=r2, wide=wide * occl,
+                                                         narrow=narrow * occl)
 
 
 def layers(c, feat):

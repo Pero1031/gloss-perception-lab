@@ -66,7 +66,27 @@ directional part.
   narrow one is a GGX lobe of a compact source. With the true albedo, the specular share of the object's light matches
   the real semi-glossy renders across shapes and lights (ours 0.23-0.53, real 0.21-0.47, same order).
 - Not from the image: the albedo, which sets the strength, and how much of the directional light is one compact source.
-- Open: normals estimated from the image, structure inside reflections on smooth surfaces, perceptual ratings.
+- Open: structure inside reflections on smooth surfaces, perceptual ratings.
+
+Normals from one image (`normal_estimation`; 12 dark matte renders at 512 px, mean over four shapes):
+
+| Estimator | Normal error | Shape error (smoothed) | Light direction error | Wide layer r | s / image |
+|---|---|---|---|---|---|
+| MoGe-2 ViT-L | 13.4 deg | 9.2 deg | 6.2 deg | 0.79 | 3.3 |
+| MoGe-2 ViT-B | 14.1 deg | 9.4 deg | 8.3 deg | 0.76 | 1.5 |
+| Marigold-Normals v1-1 | 24.4 deg | 18.1 deg | 21.6 deg | 0.56 | 1.9-3.5 |
+| Silhouette inflation | 27.5 deg | 21.8 deg | 18.5 deg | 0.42 | 2.3 |
+| Silhouette inflation + shading step | 25.1 deg | 19.7 deg | 21.3 deg | 0.56 | 2.3 |
+
+"Wide layer r" is the correlation between the wide part of the specular layer computed from estimated normals and
+from true normals. The wide part survives estimated normals; the position of narrow highlights does not (whole-layer
+r 0.3-0.4 for every estimator). Inflation is adequate only for the sphere. Times are on a Quadro M4000.
+
+On photographs (`photo_gloss`): object region from a mask or a hue range, normals and view directions from MoGe-2,
+then the layer above. Compositing that keeps the object's identity: the wide part changes luminance only (the pixel
+keeps its chromaticity), only the narrow highlight is added as white, and the diffuse part is scaled so that the
+object's mean luminance stays the same. Adding the whole layer as white light brightens and desaturates the object.
+The albedo, which sets the strength, is still a guess.
 
 | Script | Purpose |
 |---|---|
@@ -74,6 +94,8 @@ directional part.
 | `gloss_edit_eval` | detection and edit errors against the true specular pass |
 | `tshrnet_eval` | the same test for TSHRNet (code and weights from its authors, placed in `external/`) |
 | `highlight_synthesis` | specular layers for matte objects from normals and the shading fit, compared with real renders |
+| `normal_estimation` | normals from one image (silhouette inflation, MoGe-2, Marigold) scored by normal error and by the specular layer |
+| `photo_gloss` | the whole chain on a photograph |
 
 ## Setup
 
@@ -84,6 +106,9 @@ python -m venv .venv
 ```
 
 Rendering scripts need Blender 4.5; `scripts/stereo_matching.py` needs `opencv-python`.
+`normal_estimation` and `photo_gloss` also need `diffusers`, `transformers`, `huggingface_hub`,
+`opencv-python-headless` and the MoGe repository (https://github.com/microsoft/MoGe) cloned into `external/MoGe`
+with its `utils3d_moge` dependency; model weights are fetched from the Hugging Face hub on first use.
 
 ## Data
 
@@ -135,5 +160,7 @@ Scripts that import `bpy` run inside Blender (`blender -b --factory-startup -P <
 - Prokott, K. E., Fleming, R. W. (2022). Identifying specular highlights: insights from deep learning. *Journal of
   Vision*, 22(7).
 - Morimoto et al. (2025). bioRxiv 2025.05.09.653112.
+- Wang, R. et al. (2025). MoGe-2: accurate monocular geometry with metric scale and sharp details.
+- Ke, B. et al. (2025). Marigold: affordable adaptation of diffusion-based image generators for image analysis.
 - Fu, G., Zhang, Q., Zhu, L., Xiao, C., Li, P. (2023). Towards high-quality specular highlight removal by leveraging
   large-scale synthetic data. *ICCV*.
